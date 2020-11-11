@@ -2,11 +2,13 @@ import React, { Component } from "react";
 import { connect } from "react-redux";
 import { withRouter } from "react-router-dom";
 import { Spinner, Pagination } from "reactstrap";
+import InfiniteScroll from "react-infinite-scroll-component";
 import { getAllPhotographers } from "../../actions";
 import ProfileCards from "../../components/profilecards";
 import FilterBox from "../../components/filterBox";
 import PaginationItem from "../../components/pagination/index";
 import { causes, languages } from "../../helpers/form-data-options";
+import { length } from "file-loader";
 
 /**
  * When mounted dispatches action to fetch basic info from all photographers and display in proper
@@ -27,7 +29,9 @@ class AllPhotographers extends Component {
         skill: "",
         locationInput: "",
         dataFilteredFeat: null,
-        dataFilteredMore: null
+        dataFilteredMore: [],
+        currentPage: 10,
+        hasMore: true
     };
 
     componentDidMount() {
@@ -168,11 +172,89 @@ class AllPhotographers extends Component {
                 break;
         }
         if (filterId) {
+            this.setState({ currentPage: filterId });
             this.changePageHandler(filterId, type);
         }
     };
 
+    fetchMoreData = () => {
+        console.log("fetch More");
+        // if (this.state.dataFilteredMore.length === this.state.morePhotographers.length) {
+        //     this.setState({ hasMore: false });
+        //     return;
+        // }
+        setTimeout(() => {
+            this.setState({
+                dataFilteredMore: this.state.dataFilteredMore.concat(
+                    this.state.morePhotographers.slice(0, 20)
+                )
+            });
+            console.log(this.state.dataFilteredMore);
+        }, 500);
+    };
+    //     let counter = this.state.currentPage;
+
+    //     setTimeout(() => {
+    //         this.setState({
+    //             filteredMorePhotographers: this.state.filteredMorePhotographers.concat(this.state.filteredMorePhotographers.slice(0, counter))
+    //         });
+    //         console.log(counter)
+    //         console.log(this.state.filteredMorePhotographers)
+    //     }, 1000);
+    //     counter = this.state.currentPage + counter;
+    //     console.log(this.state.filteredMorePhotographers);
+    // };
+
     changePageHandler = (pageNumber, type) => {
+        // let currentPage = this.state.currentPage;
+        // if (type === "more") {
+        //     if (!this.state.dataFilteredMore && this.state.morePhotographers.length > currentPage) {
+        //         let selectedPage;
+        //         switch (pageNumber) {
+        //             case 10:
+        //                 selectedPage = currentPage + 10;
+        //                 break;
+        //             case 30:
+        //                 selectedPage = currentPage + 30;
+        //                 break;
+        //             case 50:
+        //                 selectedPage = currentPage + 50;
+        //                 break;
+        //             case 100:
+        //                 selectedPage = currentPage + 100;
+        //                 break;
+        //             default:
+        //                 return;
+        //         }
+        //         this.setState({
+        //             filteredMorePhotographers: this.state.morePhotographers.slice(
+        //                 currentPage,
+        //                 selectedPage
+        //             ),
+        //             currentPage: selectedPage
+        //         });
+        //     } else {
+        //         this.setState({
+        //             dataFilteredMore: this.state.dataFilteredMore.slice(currentPage, pageNumber),
+        //             currentPage: pageNumber
+        //         });
+        //     }
+        // } else if (type === "featured") {
+        //     if (!this.state.dataFilteredFeat) {
+        //         this.setState({
+        //             filteredFeatPhotographers: this.state.featuredPhotographers.slice(
+        //                 currentPage,
+        //                 pageNumber
+        //             ),
+        //             currentPage: pageNumber
+        //         });
+        //     } else {
+        //         this.setState({
+        //             dataFilteredFeat: this.state.dataFilteredFeat.slice(currentPage, pageNumber),
+        //             currentPage: pageNumber
+        //         });
+        //     }
+        // }
         if (type === "more") {
             if (!this.state.dataFilteredMore) {
                 this.setState({
@@ -211,10 +293,11 @@ class AllPhotographers extends Component {
             displayMoreFilterData = filteredMorePhotographers;
             displayFeatFilterData = filteredFeatPhotographers;
         } else {
-            console.log(this.state)
+            console.log(this.state);
             displayMoreFilterData = dataFilteredMore;
             displayFeatFilterData = dataFilteredFeat;
         }
+        console.log("dataFilteredMore: ", displayMoreFilterData);
         return (
             <div>
                 {this.props.token ? (
@@ -273,17 +356,24 @@ class AllPhotographers extends Component {
                         />
                     ))}
                 </Pagination>
-                {morePhotographers.length > 0 ? (
-                    <ProfileCards
-                        userType="photographer"
-                        cards={displayMoreFilterData}
-                        pushHistory={id => {
-                            this.props.history.push(`/photographer/${id}`);
-                        }}
-                    />
-                ) : (
-                    <Spinner type="grow" color="success" />
-                )}
+                <InfiniteScroll
+                    dataLength={this.state.filteredMorePhotographers.length}
+                    next={this.fetchMoreData}
+                    hasMore={this.state.hasMore}
+                    loader={<h4>Loading...</h4>}
+                >
+                    {morePhotographers.length > 0 ? (
+                        <ProfileCards
+                            userType="photographer"
+                            cards={displayMoreFilterData}
+                            pushHistory={id => {
+                                this.props.history.push(`/photographer/${id}`);
+                            }}
+                        />
+                    ) : (
+                        <Spinner type="grow" color="success" />
+                    )}
+                </InfiniteScroll>
             </div>
         );
     }

@@ -24,7 +24,9 @@ module.exports = (env, argv) => ({
             chunks: "all"
         }
     },
-
+    node: {
+        fs: "empty"
+    },
     plugins:
         argv.mode === "production"
             ? [
